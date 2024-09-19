@@ -1,5 +1,5 @@
 const { db } = require("./db")
-const { Restaurant, Menu } = require("./models/index")
+const { Restaurant, Menu, Item } = require("./models/index")
 const { seedRestaurant, seedMenu } = require("./seedData")
 
 describe("Restaurant and Menu Models", () => {
@@ -43,5 +43,31 @@ describe("Restaurant and Menu Models", () => {
 		const menu2 = await Menu.create({ title: "Chicken" })
 		let deleteMenu = await menu2.destroy()
 		expect(deleteMenu.title).toEqual("Chicken")
+	})
+
+	it("check Restaurant/Menu association", async () => {
+		const restaurant = await Restaurant.create({ name: "Taco Bell", location: "FW", cuisine: "Tacos" })
+		const menu = await Menu.create({ title: "Taco Taco" })
+		await menu.setRestaurant(restaurant)
+		const restaurantMenus = await Restaurant.findOne({
+			where: {
+				name: "Taco Bell",
+			},
+			include: Menu,
+		})
+		expect(restaurantMenus.Menus[0].title).toBe("Taco Taco")
+	})
+
+	it("check Menu/Item association", async () => {
+		const menu = await Menu.create({ title: "BBQ" })
+		const item = await Item.create({ name: "Pork Ribs", image: "ribs.jpg", price: 30, vegetarian: false })
+		await item.addMenu(menu)
+		const menuItems = await Menu.findOne({
+			where: {
+				title: "BBQ",
+			},
+			include: Item,
+		})
+		expect(menuItems.Items[0].name).toBe("Pork Ribs")
 	})
 })
